@@ -1,0 +1,961 @@
+openapi: 3.0.0
+servers:
+  # Added by API Auto Mocking Plugin
+  - description: Journal Therapy
+    url: https://virtserver.swaggerhub.com/own-e84/Journalling_for_therapy/1.0.0
+info:
+  title: Therapy Journalling API
+  description: >
+    API for a therapy journalling platform where clients can log emotions,
+    connect with therapists, manage journal access, and book sessions.
+  version: 1.0.0
+tags:
+  - name: Auth
+    description: Login and account creation for both client & therapist
+  - name: Clients
+    description: Client profile management
+  - name: Therapists
+    description: Therapist profile management
+  - name: Journals
+    description: Emotion journal entries owned by a client
+  - name: Mappings
+    description: Relationships between a client and their therapists
+  - name: Sessions
+    description: Therapy sessions created and managed by therapists
+  - name: Messages
+    description: In-app messaging between clients and therapists
+
+paths:
+
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register a new account (client or therapist)
+      description: A single registration endpoint that accepts a role field.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Account created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Email already registered
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login with email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful — returns JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /clients:
+    get:
+      tags: [Clients]
+      summary: List all clients
+      responses:
+        '200':
+          description: List of clients
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Client'
+
+  /clients/{clientId}:
+    get:
+      tags: [Clients]
+      summary: Get a client's profile By id
+      parameters:
+        - $ref: '#/components/parameters/ClientIdParam'
+      responses:
+        '200':
+          description: Client profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags: [Clients]
+      summary: Update a client's profile
+      parameters:
+        - $ref: '#/components/parameters/ClientIdParam'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClientInput'
+      responses:
+        '200':
+          description: Updated client profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    delete:
+      tags: [Clients]
+      summary: Delete a client account
+      parameters:
+        - $ref: '#/components/parameters/ClientIdParam'
+      responses:
+        '204':
+          description: Account deleted
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+
+  /therapists:
+    get:
+      tags: [Therapists]
+      summary: List all therapists available on the platform
+      description: Used by clients to search and select a therapist.
+      responses:
+        '200':
+          description: List of therapists
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Therapist'
+
+  /therapists/{therapistId}:
+    get:
+      tags: [Therapists]
+      summary: Get a therapist's profile
+      parameters:
+        - $ref: '#/components/parameters/TherapistIdParam'
+      responses:
+        '200':
+          description: Therapist profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Therapist'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Therapists]
+      summary: Update a therapist's profile
+      parameters:
+        - $ref: '#/components/parameters/TherapistIdParam'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TherapistInput'
+      responses:
+        '200':
+          description: Updated therapist profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Therapist'
+    delete:
+      tags: [Therapists]
+      summary: Delete a therapist account
+      parameters:
+        - $ref: '#/components/parameters/TherapistIdParam'
+      responses:
+        '204':
+          description: Account deleted
+
+
+  /journals/clients/{clientId}:
+    post:
+      tags: [Journals]
+      summary: Add a new journal entry (emotion record)
+      parameters:
+        - $ref: '#/components/parameters/ClientIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JournalInput'
+      responses:
+        '201':
+          description: Journal entry created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Journal'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+    get:
+      tags: [Journals]
+      summary: List all journal entries for a client
+      description: Accessible by the client themselves, or by a therapist who has been granted journal access.
+      parameters:
+        - $ref: '#/components/parameters/ClientIdParam'
+      responses:
+        '200':
+          description: List of journals
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Journal'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /journals/{journalId}/clients/{clientId}:
+    get:
+      tags: [Journals]
+      summary: Get a single journal
+      parameters:
+        - $ref: '#/components/parameters/ClientIdParam'
+        - $ref: '#/components/parameters/JournalIdParam'
+      responses:
+        '200':
+          description: Journal entry detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Journal'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Journals]
+      summary: Update a journal entry
+      parameters:
+        - $ref: '#/components/parameters/ClientIdParam'
+        - $ref: '#/components/parameters/JournalIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JournalInput'
+      responses:
+        '200':
+          description: Updated journal entry
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Journal'
+    delete:
+      tags: [Journals]
+      summary: Delete a journal
+      parameters:
+        - $ref: '#/components/parameters/ClientIdParam'
+        - $ref: '#/components/parameters/JournalIdParam'
+      responses:
+        '204':
+          description: Entry deleted
+
+  /journals/{journalId}/therapists/{therapistId}:
+    put:
+      tags: [Journals]
+      summary: Therapist requests access to client's journal
+      parameters:
+        - $ref: '#/components/parameters/JournalIdParam'
+        - $ref: '#/components/parameters/TherapistIdParam'
+      requestBody:
+        description: Request details for therapist to access client's journal
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Journal'
+      responses:
+        '201':
+          description: Journal access request created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Journal'
+        '409':
+          description: Request already exists
+
+    get:
+      tags: [Journals]
+      summary: Get a journals which access approved by client to therapists
+      parameters:
+        - $ref: '#/components/parameters/JournalIdParam'
+        - $ref: '#/components/parameters/TherapistIdParam'
+      responses:
+        '200':
+          description: Journal entry detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Journal'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /journals/search:
+    get:
+      tags: [Journals]
+      summary: Search journals by keyword in emotion field
+      description: Returns all journal entries where the `emotion` field contains the specified keyword.
+      parameters:
+        - name: feeling
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Keyword to search in the feelings field
+      responses:
+        '200':
+          description: List of matching journal entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Journal'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /mapping/clients/{clientId}/therapists:
+    get:
+      tags: [Mappings]
+      summary: List all therapists related to this client
+      description: Returns therapists that are mapped to this client
+      parameters:
+        - $ref: '#/components/parameters/ClientIdParam'
+      responses:
+        '200':
+          description: List of therapist mappings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Mapping'
+
+  /mapping/clients/{clientId}/therapists/{therapistId}:
+    post:
+      tags: [Mappings]
+      summary: Client maps a therapist to their account
+      description: Client searches and selects a therapist from the platform.Creates a mapping between them.
+      parameters:
+        - $ref: '#/components/parameters/ClientIdParam'
+        - $ref: '#/components/parameters/TherapistIdParam'
+      responses:
+        '201':
+          description: Mapping created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mapping'
+        '409':
+          description: Mapping already exists
+    get:
+      tags: [Mappings]
+      summary: Get mapping details between a specific client and therapist
+      parameters:
+        - $ref: '#/components/parameters/ClientIdParam'
+        - $ref: '#/components/parameters/TherapistIdParam'
+      responses:
+        '200':
+          description: Mapping details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mapping'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Mappings]
+      summary: Client approves or rejects therapist mapping
+      parameters:
+        - $ref: '#/components/parameters/ClientIdParam'
+        - $ref: '#/components/parameters/TherapistIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [approved, rejected]
+      responses:
+        '200':
+          description: Mapping updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mapping'
+    delete:
+      tags: [Mappings]
+      summary: Remove a therapist from client's account entirely
+      description: Also automatically revokes journal access.
+      parameters:
+        - $ref: '#/components/parameters/ClientIdParam'
+        - $ref: '#/components/parameters/TherapistIdParam'
+      responses:
+        '204':
+          description: Mapping removed
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /mapping/therapists/{therapistId}/clients/{clientId}:
+    post:
+      tags: [Mappings]
+      summary: Therapist sends a mapping request to a client
+      description: Therapist initiates the relationship. client must approve separately.
+      parameters:
+        - $ref: '#/components/parameters/ClientIdParam'
+        - $ref: '#/components/parameters/TherapistIdParam'
+      responses:
+        '200':
+          description: Mapping request created (pending)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mapping'
+    delete:
+      tags: [Mappings]
+      summary: Therapist removes a client mapping
+      description: Journal access is automatically revoked.
+      parameters:
+        - $ref: '#/components/parameters/ClientIdParam'
+        - $ref: '#/components/parameters/TherapistIdParam'
+      responses:
+        '204':
+          description: Client mapping removed
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /session/therapists/{therapistId}:
+    post:
+      tags: [Sessions]
+      summary: Therapist creates a new session slot
+      description: Any client on the platform can later apply for this session. The session includes private notes (therapist-only) and shared notes visible to the booked client (e.g. assignments).
+      parameters:
+        - $ref: '#/components/parameters/TherapistIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SessionInput'
+      responses:
+        '201':
+          description: Session created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /session/{sessionId}/therapists/{therapistId}:
+    put:
+      tags: [Sessions]
+      summary: Therapist modifies a session's details like approve or reject client request for session
+      parameters:
+        - $ref: '#/components/parameters/TherapistIdParam'
+        - $ref: '#/components/parameters/SessionIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SessionInput'
+      responses:
+        '200':
+          description: Updated session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /session:
+    get:
+      tags: [Sessions]
+      summary: List all available sessions on the platform
+      description: Used by clients to browse and select a session to request an appointment for. Returns only sessions with status = available.
+      responses:
+        '200':
+          description: List of available sessions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Session'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+
+  /session/{sessionId}/clients/{clientId}:
+    put:
+      tags: [Sessions]
+      summary: Client requests an appointment for an available session
+      parameters:
+        - $ref: '#/components/parameters/ClientIdParam'
+        - $ref: '#/components/parameters/SessionIdParam'
+      responses:
+        '201':
+          description: Appointment request submitted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '409':
+          description: Session is already booked or unavailable
+
+  /session/search:
+    get:
+      tags: [Sessions]
+      summary: Keyword search across session notes
+      description: >
+        Searches privateNotes (therapist-only) and sharedNotes by keyword.
+        Clients can only search sharedNotes. Therapists can search both,
+        scoped to their own sessions.
+      parameters:
+        - name: keyword
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Keyword to search for
+          example: "anxiety"
+        - name: field
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [privateNotes, sharedNotes, both]
+            default: both
+          description: Which notes field to search
+        - name: therapistId
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Scope results to a specific therapist's sessions
+        - name: clientId
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Scope results to a specific client's sessions
+      responses:
+        '200':
+          description: Matching sessions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Session'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+
+  /messages:
+    post:
+      tags: [Messages]
+      summary: Send a message between client and therapist
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MessageInput'
+      responses:
+        '201':
+          description: Message sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+    get:
+      tags: [Messages]
+      summary: Get message history
+      parameters:
+        - $ref: '#/components/parameters/ClientIdParam'
+        - $ref: '#/components/parameters/TherapistIdParam'
+      responses:
+        '200':
+          description: Message history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Message'
+
+components:
+
+  responses:
+
+    BadRequest:
+      description: Invalid request payload
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: Missing or invalid authentication token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Forbidden:
+      description: Insufficient permissions for this action
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Requested resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+
+  parameters:
+
+    ClientIdParam:
+      name: clientId
+      in: path
+      required: true
+      schema:
+        type: string
+
+    TherapistIdParam:
+      name: therapistId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Unique identifier of the therapist
+
+    JournalIdParam:
+      name: journalId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Unique identifier of a journal
+
+    AccessIdParam:
+      name: accessId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Unique identifier of a journal
+
+    SessionIdParam:
+      name: sessionId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Unique identifier of a session
+
+
+  schemas:
+
+    RegisterRequest:
+      type: object
+      required: [email, password, name, role]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        name:
+          type: string
+        role:
+          type: string
+          enum: [client, therapist]
+
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: JWT access token
+        role:
+          type: string
+          enum: [client, therapist]
+        userId:
+          type: string
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        statusCode:
+          type: integer
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+
+
+    ClientInput:
+      type: object
+      required: [name, email, password]
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+
+    Client:
+      type: object
+      properties:
+        clientId:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        createdAt:
+          type: string
+          format: date-time
+
+    TherapistInput:
+      type: object
+      required: [name, email, password]
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        specialization:
+          type: string
+        bio:
+          type: string
+
+    Therapist:
+      type: object
+      properties:
+        therapistId:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        specialization:
+          type: string
+        bio:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    JournalInput:
+      type: object
+      required: [emotionTime, feeling, intensity]
+      properties:
+        emotionTime:
+          type: string
+          format: date-time
+        feeling:
+          type: string
+          example: "Sadness"
+        intensity:
+          type: string
+          enum: [strong,medium,light]
+        notes:
+          type: string
+
+    Journal:
+      type: object
+      properties:
+        journalId:
+          type: string
+        clientId:
+          type: string
+        emotionTime:
+          type: string
+          format: date-time
+          description: When the emotion was experienced
+        feeling:
+          type: string
+          description: Emotion label from the vocabulary (e.g., Joy, Anger, Fear, Sadness).
+        intensity:
+          type: string
+          description: Intensity of the emotion (Strong, Medium, Light)
+        notes:
+          type: string
+          description: A note about the emotion
+        createdAt:
+          type: string
+          format: date-time
+        therapistReviews:
+          type: object
+          description: A map of therapist IDs to their  status for access to jounal
+          additionalProperties:
+            type: string
+            description: status
+
+    Mapping:
+      type: object
+      description: Represents the relationship between a client and a therapist
+      properties:
+        MappingId:
+          type: string
+        clientId:
+          type: string
+        therapistId:
+          type: string
+        status:
+          type: string
+          enum: [pending, approved, rejected]
+          description: Whether the therapist is linked to the client
+        createdAt:
+          type: string
+          format: date-time
+
+    SessionInput:
+      type: object
+      description: Input for creating or updating a session
+      required: [title, scheduledAt, durationMinutes]
+      properties:
+        title:
+          type: string
+          example: "Anxiety management — intro session"
+        therapistId:
+          type: string
+          description: ID of the therapist conducting the session
+        sessionStatus:
+          type: string
+          enum: [available, booked, rejected, Done]
+          description: Current status of the session
+        scheduledAt:
+          type: string
+          format: date-time
+          description: When the session is scheduled to start
+        durationMinutes:
+          type: integer
+          example: 60
+          description: Length of the session in minutes
+        privateNotes:
+          type: string
+          description: Therapist-only notes — not visible to the client
+        sharedNotes:
+          type: string
+          description: Notes shared with the booked client (assignments, homework, etc.)
+
+    Session:
+      type: object
+      properties:
+        sessionId:
+          type: string
+        therapistId:
+          type: string
+        clientId:
+          type: string
+        title:
+          type: string
+        scheduledAt:
+          type: string
+          format: date-time
+        durationMinutes:
+          type: integer
+        status:
+          type: string
+          enum: [available, booked, completed, cancelled]
+        privateNotes:
+          type: string
+          description: Visible only to the therapist
+        sharedNotes:
+          type: string
+          description: Visible to both the therapist and the booked client
+        createdAt:
+          type: string
+          format: date-time
+
+    MessageInput:
+      type: object
+      required: [senderId, receiverId, content]
+      properties:
+        senderId:
+          type: string
+        receiverId:
+          type: string
+        content:
+          type: string
+
+    Message:
+      type: object
+      properties:
+        messageId:
+          type: string
+        conversationId:
+          type: string
+        senderId:
+          type: string
+        receiverId:
+          type: string
+        content:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
