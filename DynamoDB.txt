@@ -1,0 +1,98 @@
+DynamoDB Design
+===============
+
+1. CLIENT TABLE
+   Attributes:
+- clientId (string)	PK
+- name (string)
+- email (string)
+- password (string)
+- createdAt (string)
+
+GSI:
+EmailIndex (PK: email)
+
+
+2. THERAPIST TABLE
+   Attributes:
+- therapistId (string)	PK
+- name (string)
+- email (string)
+- password (string)
+- specialization (string)
+- bio (string)
+- createdAt (string)
+
+
+
+
+
+3. JOURNAL TABLE
+   Attributes:
+- clientId (string)	SK
+- journalId (string)	PK
+- emotionTime (string)
+- feeling (string)
+- intensity (string)
+- notes (string)
+- createdAt (string)
+- therapistReviews (map)   { therapistId (string) → status (string) }
+
+GSI
+journalsByclientId
+PK- clientId
+sk - journalId
+
+
+
+
+4. MAPPING TABLE
+
+Attributes:
+- mappingId (string)
+- clientId (string) pk
+- therapistId (string) sk
+- status (string)
+- createdAt (string)
+
+GSI:
+- TherapistMappingIndex
+PK: therapistId
+SK: clientId
+
+
+
+5. Sessions Table
+
+- sessionId: String 	PK
+- therapistId: String   SK
+- title: String
+- durationMinutes: String
+- clientId: String
+- time: String
+- Sessionstatus: String (enum: [available, booked, rejected, Done])
+- privateNotes: String
+- sharedNotes: String
+
+LSI:
+PK: clientId
+
+GSI:
+PK : Sessionstatus
+SK : clientId
+
+
+6. Messages Table
+
+- messageId (string)         PK
+- conversationId (string)    SK
+- senderId (string)
+- receiverId (string)
+- content (string)
+- timestamp (string)
+
+
+GSI
+messagesByConversation
+PK - conversationId
+SK - timestamp
