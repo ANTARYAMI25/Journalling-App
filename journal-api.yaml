@@ -29,6 +29,7 @@ paths:
 
   /auth/register:
     post:
+      operationId: registerAccount
       tags: [Auth]
       summary: Register a new account (client or therapist)
       description: A single registration endpoint that accepts a role field.
@@ -44,14 +45,26 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthResponse'
+                oneOf:
+                  - $ref: '#/components/schemas/AuthResponseClient'
+                  - $ref: '#/components/schemas/AuthResponseTherapist'
+                discriminator:
+                  propertyName: role
+                  mapping:
+                    client: '#/components/schemas/AuthResponseClient'
+                    therapist: '#/components/schemas/AuthResponseTherapist'
         '400':
           $ref: '#/components/responses/BadRequest'
         '409':
           description: Email already registered
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
 
   /auth/login:
     post:
+      operationId: loginUser
       tags: [Auth]
       summary: Login with email and password
       requestBody:
@@ -62,16 +75,28 @@ paths:
               $ref: '#/components/schemas/LoginRequest'
       responses:
         '200':
-          description: Login successful — returns JWT token
+          description: Login successful — returns JWT token with user object
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthResponse'
+                oneOf:
+                  - $ref: '#/components/schemas/AuthResponseClient'
+                  - $ref: '#/components/schemas/AuthResponseTherapist'
+                discriminator:
+                  propertyName: role
+                  mapping:
+                    client: '#/components/schemas/AuthResponseClient'
+                    therapist: '#/components/schemas/AuthResponseTherapist'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
 
   /clients:
     get:
+      operationId: getAllClients
       tags: [Clients]
       summary: List all clients
       responses:
@@ -83,9 +108,14 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Client'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
 
   /clients/{clientId}:
     get:
+      operationId: getClientById
       tags: [Clients]
       summary: Get a client's profile By id
       parameters:
@@ -99,8 +129,13 @@ paths:
                 $ref: '#/components/schemas/Client'
         '404':
           $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
 
     put:
+      operationId: updateClientProfile
       tags: [Clients]
       summary: Update a client's profile
       parameters:
@@ -119,8 +154,15 @@ paths:
                 $ref: '#/components/schemas/Client'
         '403':
           $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
 
     delete:
+      operationId: deleteClientAccount
       tags: [Clients]
       summary: Delete a client account
       parameters:
@@ -130,10 +172,17 @@ paths:
           description: Account deleted
         '403':
           $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
 
 
   /therapists:
     get:
+      operationId: getAllTherapists
       tags: [Therapists]
       summary: List all therapists available on the platform
       description: Used by clients to search and select a therapist.
@@ -146,9 +195,14 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Therapist'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
 
   /therapists/{therapistId}:
     get:
+      operationId: getTherapistById
       tags: [Therapists]
       summary: Get a therapist's profile
       parameters:
@@ -162,7 +216,12 @@ paths:
                 $ref: '#/components/schemas/Therapist'
         '404':
           $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
     put:
+      operationId: updateTherapistProfile
       tags: [Therapists]
       summary: Update a therapist's profile
       parameters:
@@ -179,7 +238,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Therapist'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
     delete:
+      operationId: deleteTherapistAccount
       tags: [Therapists]
       summary: Delete a therapist account
       parameters:
@@ -187,10 +255,19 @@ paths:
       responses:
         '204':
           description: Account deleted
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
 
 
   /journals/clients/{clientId}:
     post:
+      operationId: createJournalEntry
       tags: [Journals]
       summary: Add a new journal entry (emotion record)
       parameters:
@@ -210,7 +287,12 @@ paths:
                 $ref: '#/components/schemas/Journal'
         '400':
           $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
     get:
+      operationId: getClientJournals
       tags: [Journals]
       summary: List all journal entries for a client
       description: Accessible by the client themselves, or by a therapist who has been granted journal access.
@@ -227,9 +309,14 @@ paths:
                   $ref: '#/components/schemas/Journal'
         '403':
           $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
 
   /journals/{journalId}/clients/{clientId}:
     get:
+      operationId: getJournalEntry
       tags: [Journals]
       summary: Get a single journal
       parameters:
@@ -244,7 +331,12 @@ paths:
                 $ref: '#/components/schemas/Journal'
         '404':
           $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
     put:
+      operationId: updateJournalEntry
       tags: [Journals]
       summary: Update a journal entry
       parameters:
@@ -263,7 +355,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Journal'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
     delete:
+      operationId: deleteJournalEntry
       tags: [Journals]
       summary: Delete a journal
       parameters:
@@ -272,32 +373,41 @@ paths:
       responses:
         '204':
           description: Entry deleted
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
 
-  /journals/{journalId}/therapists/{therapistId}:
+  /journals/{journalId}/access/therapists/{therapistId}:
     put:
+      operationId: requestJournalAccess
       tags: [Journals]
-      summary: Therapist requests access to client's journal
+      summary: Therapist requests access to a specific journal
       parameters:
         - $ref: '#/components/parameters/JournalIdParam'
         - $ref: '#/components/parameters/TherapistIdParam'
-      requestBody:
-        description: Request details for therapist to access client's journal
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Journal'
       responses:
         '201':
-          description: Journal access request created
+          description: Access request created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Journal'
+                $ref: '#/components/schemas/JournalAccessRequest'
         '409':
-          description: Request already exists
+          description: Access request already exists
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
 
+
+  /journals/{journalId}/therapists/{therapistId}:
     get:
+      operationId: getJournalWithAccess
       tags: [Journals]
       summary: Get a journals which access approved by client to therapists
       parameters:
@@ -312,9 +422,55 @@ paths:
                 $ref: '#/components/schemas/Journal'
         '404':
           $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /journals/therapists/{therapistId}/clients/{clientId}:
+    get:
+      operationId: getAccessibleJournalsForTherapist
+      tags: [Journals]
+      summary: List all journal entries of a client accessible to a therapist
+      description: Returns all journal entries of a client where access has been granted to the therapist
+      parameters:
+        - $ref: '#/components/parameters/TherapistIdParam'
+        - $ref: '#/components/parameters/ClientIdParam'
+        - name: fromTimestamp
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: Start timestamp for filtering journal entries
+
+        - name: toTimestamp
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: End timestamp for filtering journal entries
+
+      responses:
+        '200':
+          description: List of accessible journal entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Journal'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
 
   /journals/search:
     get:
+      operationId: searchJournalsByFeeling
       tags: [Journals]
       summary: Search journals by keyword in emotion field
       description: Returns all journal entries where the `emotion` field contains the specified keyword.
@@ -338,9 +494,14 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '403':
           $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
 
   /mapping/clients/{clientId}/therapists:
     get:
+      operationId: getClientTherapists
       tags: [Mappings]
       summary: List all therapists related to this client
       description: Returns therapists that are mapped to this client
@@ -355,9 +516,36 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Mapping'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /mapping/therapists/{therapistId}/clients:
+    get:
+      operationId: getTherapistClients
+      tags: [Mappings]
+      summary: List all clients mapped to a therapist
+      description: Returns all clients that are mapped to this therapist
+      parameters:
+        - $ref: '#/components/parameters/TherapistIdParam'
+      responses:
+        '200':
+          description: List of client mappings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Mapping'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
 
   /mapping/clients/{clientId}/therapists/{therapistId}:
     post:
+      operationId: createClientTherapistMapping
       tags: [Mappings]
       summary: Client maps a therapist to their account
       description: Client searches and selects a therapist from the platform.Creates a mapping between them.
@@ -373,7 +561,12 @@ paths:
                 $ref: '#/components/schemas/Mapping'
         '409':
           description: Mapping already exists
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
     get:
+      operationId: getMappingDetails
       tags: [Mappings]
       summary: Get mapping details between a specific client and therapist
       parameters:
@@ -388,7 +581,12 @@ paths:
                 $ref: '#/components/schemas/Mapping'
         '404':
           $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
     put:
+      operationId: updateMappingStatus
       tags: [Mappings]
       summary: Client approves or rejects therapist mapping
       parameters:
@@ -411,7 +609,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Mapping'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
     delete:
+      operationId: deleteClientTherapistMapping
       tags: [Mappings]
       summary: Remove a therapist from client's account entirely
       description: Also automatically revokes journal access.
@@ -421,11 +626,20 @@ paths:
       responses:
         '204':
           description: Mapping removed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mapping'
         '404':
           $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
 
   /mapping/therapists/{therapistId}/clients/{clientId}:
     post:
+      operationId: therapistRequestClientMapping
       tags: [Mappings]
       summary: Therapist sends a mapping request to a client
       description: Therapist initiates the relationship. client must approve separately.
@@ -439,7 +653,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Mapping'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
     delete:
+      operationId: therapistRemoveClientMapping
       tags: [Mappings]
       summary: Therapist removes a client mapping
       description: Journal access is automatically revoked.
@@ -451,9 +670,14 @@ paths:
           description: Client mapping removed
         '404':
           $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
 
   /session/therapists/{therapistId}:
     post:
+      operationId: createSession
       tags: [Sessions]
       summary: Therapist creates a new session slot
       description: Any client on the platform can later apply for this session. The session includes private notes (therapist-only) and shared notes visible to the booked client (e.g. assignments).
@@ -474,9 +698,14 @@ paths:
                 $ref: '#/components/schemas/Session'
         '400':
           $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
 
   /session/{sessionId}/therapists/{therapistId}:
     put:
+      operationId: updateSession
       tags: [Sessions]
       summary: Therapist modifies a session's details like approve or reject client request for session
       parameters:
@@ -499,29 +728,56 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
 
   /session:
     get:
+      operationId: getAllAvailableSessions
       tags: [Sessions]
       summary: List all available sessions on the platform
-      description: Used by clients to browse and select a session to request an appointment for. Returns only sessions with status = available.
+      description: Used by clients to browse and select a session to request an appointment for. Returns only sessions with status = available. Supports filtering by specialization and location.
+      parameters:
+        - name: specialization
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter sessions by therapist's specialization (e.g., anxiety, depression, trauma, relationship)
+          example: "anxiety"
+        - name: location
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter sessions by therapist's location (city, region, or online)
+          example: "New York"
       responses:
         '200':
-          description: List of available sessions
+          description: List of available sessions matching filters
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: '#/components/schemas/Session'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '403':
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
 
 
   /session/{sessionId}/clients/{clientId}:
     put:
+      operationId: requestSessionAppointment
       tags: [Sessions]
       summary: Client requests an appointment for an available session
       parameters:
@@ -536,9 +792,14 @@ paths:
                 $ref: '#/components/schemas/Session'
         '409':
           description: Session is already booked or unavailable
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
 
   /session/search:
     get:
+      operationId: searchSessionsByNotes
       tags: [Sessions]
       summary: Keyword search across session notes
       description: >
@@ -586,10 +847,15 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '403':
           $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
 
 
   /messages:
     post:
+      operationId: sendMessage
       tags: [Messages]
       summary: Send a message between client and therapist
       requestBody:
@@ -607,8 +873,13 @@ paths:
                 $ref: '#/components/schemas/Message'
         '400':
           $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
 
     get:
+      operationId: getMessageHistory
       tags: [Messages]
       summary: Get message history
       parameters:
@@ -623,6 +894,10 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Message'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
 
 components:
 
@@ -648,6 +923,18 @@ components:
             $ref: '#/components/schemas/ErrorResponse'
     NotFound:
       description: Requested resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    InternalServerError:
+      description: Internal server error - something went wrong on the server
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    ServiceUnavailable:
+      description: Service temporarily unavailable - please try again later
       content:
         application/json:
           schema:
@@ -714,17 +1001,23 @@ components:
           type: string
           enum: [client, therapist]
 
-    AuthResponse:
+    AuthResponseClient:
       type: object
       properties:
         token:
           type: string
           description: JWT access token
-        role:
+        client:
+          $ref: '#/components/schemas/Client'
+
+    AuthResponseTherapist:
+      type: object
+      properties:
+        token:
           type: string
-          enum: [client, therapist]
-        userId:
-          type: string
+          description: JWT access token
+        therapist:
+          $ref: '#/components/schemas/Therapist'
 
     ErrorResponse:
       type: object
@@ -811,49 +1104,87 @@ components:
 
     JournalInput:
       type: object
-      required: [emotionTime, feeling, intensity]
+      required:
+        - emotionTime
+        - feeling
+        - intensity
       properties:
-        emotionTime:
-          type: string
-          format: date-time
-        feeling:
-          type: string
-          example: "Sadness"
-        intensity:
-          type: string
-          enum: [strong,medium,light]
-        notes:
-          type: string
-
-    Journal:
-      type: object
-      properties:
-        journalId:
-          type: string
-        clientId:
-          type: string
         emotionTime:
           type: string
           format: date-time
           description: When the emotion was experienced
         feeling:
           type: string
-          description: Emotion label from the vocabulary (e.g., Joy, Anger, Fear, Sadness).
+          example: Sadness
+          description: Emotion label from the vocabulary
         intensity:
           type: string
-          description: Intensity of the emotion (Strong, Medium, Light)
+          enum: [strong, medium, light]
+          description: Intensity of the emotion
+        notes:
+          type: string
+          description: Optional note about the emotion
+
+    Journal:
+      type: object
+      properties:
+        journalId:
+          type: string
+          description: Unique journal identifier
+        clientId:
+          type: string
+          description: Client who owns the journal
+        emotionTime:
+          type: string
+          format: date-time
+          description: When the emotion was experienced
+        feeling:
+          type: string
+          description: Emotion label from the vocabulary
+        intensity:
+          type: string
+          enum: [strong, medium, light]
+          description: Intensity of the emotion
         notes:
           type: string
           description: A note about the emotion
         createdAt:
           type: string
           format: date-time
-        therapistReviews:
-          type: object
-          description: A map of therapist IDs to their  status for access to jounal
-          additionalProperties:
-            type: string
-            description: status
+        updatedAt:
+          type: string
+          format: date-time
+
+    JournalAccessRequest:
+      type: object
+      properties:
+        requestId:
+          type: string
+          description: Unique access request identifier
+        journalId:
+          type: string
+          description: Requested journal ID
+        clientId:
+          type: string
+          description: Client who owns the journal
+        therapistId:
+          type: string
+          description: Therapist requesting access
+        status:
+          type: string
+          enum: [PENDING, APPROVED, REJECTED]
+        requestedAt:
+          type: string
+          format: date-time
+        approvedAt:
+          type: string
+          format: date-time
+        rejectedAt:
+          type: string
+          format: date-time
+        approvedBy:
+          type: string
+          description: Client who approved access
 
     Mapping:
       type: object

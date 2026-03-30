@@ -22,31 +22,68 @@ EmailIndex (PK: email)
 - specialization (string)
 - bio (string)
 - createdAt (string)
+- location (string)
 
+GSI1: SpecializationIndex
+PK- specialization
+SK- therapistId
+
+GSI2: LocationIndex
+PK- location
+SK- therapistId
 
 
 
 
 3. JOURNAL TABLE
-   Attributes:
-- clientId (string)	SK
-- journalId (string)	PK
-- emotionTime (string)
-- feeling (string)
-- intensity (string)
-- notes (string)
-- createdAt (string)
-- therapistReviews (map)   { therapistId (string) → status (string) }
 
-GSI
-journalsByclientId
-PK- clientId
-sk - journalId
+Attributes:
+- journalId 	PK
+- ClientID 	SK
+- emotionTime
+- feeling
+- intensity
+- notes
+- createdAt
+- updatedAt
+
+GSI1: journalsByClientId
+  PK = clientId
+  SK = journalId
+
+GSI2: journalsByEmotionTime
+  PK = emotionTime
+  SK = journalId
+
+
+4.JOURNAL_ACCESS Table
+Attributes:
+- requestId	PK
+- therapistId	SK
+- journalId
+- clientId
+- status
+- requestedAt
+- approvedAt
+- rejectedAt
+- approvedBy
+
+GSI1: accessByTherapistId
+  PK = therapistId
+  SK = requestedAt
+
+GSI2: accessByClientId
+  PK = clientId
+  SK = requestedAt
+
+GSI3: accessByJournalId
+  PK = journalId
+  SK = therapistId
 
 
 
 
-4. MAPPING TABLE
+5. MAPPING TABLE
 
 Attributes:
 - mappingId (string)
@@ -62,7 +99,7 @@ SK: clientId
 
 
 
-5. Sessions Table
+6. Sessions Table
 
 - sessionId: String 	PK
 - therapistId: String   SK
@@ -75,14 +112,15 @@ SK: clientId
 - sharedNotes: String
 
 LSI:
-PK: clientId
-
-GSI:
-PK : Sessionstatus
-SK : clientId
+SK: clientId
 
 
-6. Messages Table
+GSI1:
+PK : therapistId
+SK : time
+
+
+7. Messages Table
 
 - messageId (string)         PK
 - conversationId (string)    SK
