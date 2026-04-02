@@ -182,10 +182,27 @@ paths:
 
   /therapists:
     get:
-      operationId: getAllTherapists
+      operationId: searchTherapists
       tags: [Therapists]
-      summary: List all therapists available on the platform
-      description: Used by clients to search and select a therapist.
+      summary: List or search therapists
+      description: |
+        Clients can list all therapists or filter therapists by location
+        and specialization.
+      parameters:
+        - in: query
+          name: location
+          schema:
+            type: string
+          required: false
+          example: Bangalore
+          description: Search therapists by location
+        - in: query
+          name: specialization
+          schema:
+            type: string
+          required: false
+          example: Anxiety
+          description: Search therapists by expertise
       responses:
         '200':
           description: List of therapists
@@ -382,6 +399,40 @@ paths:
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
 
+  /journals/journal-ids/clients/{clientId}:
+    get:
+      operationId: getClientJournalIds
+      tags: [Journals]
+      summary: Get all journal IDs of a client
+      description: |
+        Returns only the list of journal IDs belonging to a client.
+        Used by therapists to discover available journal entries.
+      parameters:
+        - $ref: '#/components/parameters/ClientIdParam'
+      responses:
+        '200':
+          description: List of journal IDs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JournalIdsResponse'
+
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+
   /journals/{journalId}/access/therapists/{therapistId}:
     put:
       operationId: requestJournalAccess
@@ -431,27 +482,20 @@ paths:
     get:
       operationId: getAccessibleJournalsForTherapist
       tags: [Journals]
-      summary: List all journal entries of a client accessible to a therapist
-      description: Returns all journal entries of a client where access has been granted to the therapist
+      summary: List accessible journals of a client for a therapist
+      description: |
+        Returns all journal entries of a client where access has been granted
+        to the therapist. Optionally filter journals by entry timestamp.
       parameters:
         - $ref: '#/components/parameters/TherapistIdParam'
         - $ref: '#/components/parameters/ClientIdParam'
-        - name: fromTimestamp
+        - name: entryTimestamp
           in: query
           required: false
           schema:
             type: string
             format: date-time
-          description: Start timestamp for filtering journal entries
-
-        - name: toTimestamp
-          in: query
-          required: false
-          schema:
-            type: string
-            format: date-time
-          description: End timestamp for filtering journal entries
-
+          description: Filter journals by exact entry timestamp
       responses:
         '200':
           description: List of accessible journal entries
@@ -461,8 +505,12 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Journal'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '403':
           $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
         '503':
@@ -516,6 +564,10 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Mapping'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
         '503':
@@ -1055,6 +1107,7 @@ components:
 
     Client:
       type: object
+      required: [clientId, name, email]
       properties:
         clientId:
           type: string
@@ -1124,6 +1177,14 @@ components:
         notes:
           type: string
           description: Optional note about the emotion
+
+    JournalIdsResponse:
+      type: object
+      properties:
+        journalIds:
+          type: array
+          items:
+            type: string
 
     Journal:
       type: object

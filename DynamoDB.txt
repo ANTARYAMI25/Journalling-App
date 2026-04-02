@@ -55,6 +55,10 @@ GSI2: journalsByEmotionTime
   PK = emotionTime
   SK = journalId
 
+  GSI3: journalsByEntryTimeStamp
+    PK = createdAt
+    SK = journalId
+
 
 4.JOURNAL_ACCESS Table
 Attributes:
@@ -110,6 +114,7 @@ SK: clientId
 - Sessionstatus: String (enum: [available, booked, rejected, Done])
 - privateNotes: String
 - sharedNotes: String
+- location: String
 
 LSI:
 SK: clientId
