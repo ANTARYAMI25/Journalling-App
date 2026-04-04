@@ -190,13 +190,6 @@ paths:
         and specialization.
       parameters:
         - in: query
-          name: location
-          schema:
-            type: string
-          required: false
-          example: Bangalore
-          description: Search therapists by location
-        - in: query
           name: specialization
           schema:
             type: string
@@ -1055,6 +1048,7 @@ components:
 
     AuthResponseClient:
       type: object
+      required: [token, client]
       properties:
         token:
           type: string
@@ -1064,6 +1058,7 @@ components:
 
     AuthResponseTherapist:
       type: object
+      required: [token, therapist]
       properties:
         token:
           type: string
@@ -1073,6 +1068,7 @@ components:
 
     ErrorResponse:
       type: object
+      required: [error, message, statusCode]
       properties:
         error:
           type: string
@@ -1139,6 +1135,7 @@ components:
 
     Therapist:
       type: object
+      required: [therapistId, name, email]
       properties:
         therapistId:
           type: string
@@ -1157,10 +1154,7 @@ components:
 
     JournalInput:
       type: object
-      required:
-        - emotionTime
-        - feeling
-        - intensity
+      required: [emotionTime, feeling, intensity]
       properties:
         emotionTime:
           type: string
@@ -1180,14 +1174,20 @@ components:
 
     JournalIdsResponse:
       type: object
+      required: [journalIds]
       properties:
         journalIds:
           type: array
           items:
             type: string
+          example:
+            - jrnl-101
+            - jrnl-102
+            - jrnl-103
 
     Journal:
       type: object
+      required: [journalId, clientId, emotionTime, feeling, intensity]
       properties:
         journalId:
           type: string
@@ -1218,6 +1218,7 @@ components:
 
     JournalAccessRequest:
       type: object
+      required: [requestId, journalId, clientId, therapistId, status, requestedAt]
       properties:
         requestId:
           type: string
@@ -1249,9 +1250,10 @@ components:
 
     Mapping:
       type: object
+      required: [mappingId, clientId, therapistId, status]
       description: Represents the relationship between a client and a therapist
       properties:
-        MappingId:
+        mappingId:
           type: string
         clientId:
           type: string
@@ -1288,6 +1290,8 @@ components:
           type: integer
           example: 60
           description: Length of the session in minutes
+        location:
+          type: string
         privateNotes:
           type: string
           description: Therapist-only notes — not visible to the client
@@ -1297,6 +1301,13 @@ components:
 
     Session:
       type: object
+      required:
+        - sessionId
+        - therapistId
+        - title
+        - scheduledAt
+        - durationMinutes
+        - status
       properties:
         sessionId:
           type: string
@@ -1311,6 +1322,8 @@ components:
           format: date-time
         durationMinutes:
           type: integer
+        location:
+          type: string
         status:
           type: string
           enum: [available, booked, completed, cancelled]
@@ -1337,6 +1350,13 @@ components:
 
     Message:
       type: object
+      required:
+        - messageId
+        - conversationId
+        - senderId
+        - receiverId
+        - content
+        - timestamp
       properties:
         messageId:
           type: string

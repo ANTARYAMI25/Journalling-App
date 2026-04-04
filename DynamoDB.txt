@@ -22,14 +22,9 @@ EmailIndex (PK: email)
 - specialization (string)
 - bio (string)
 - createdAt (string)
-- location (string)
 
 GSI1: SpecializationIndex
 PK- specialization
-SK- therapistId
-
-GSI2: LocationIndex
-PK- location
 SK- therapistId
 
 
