@@ -1270,7 +1270,7 @@ components:
     SessionInput:
       type: object
       description: Input for creating or updating a session
-      required: [title, scheduledAt, durationMinutes]
+      required: [title, scheduledAt, durationMinutes, location]
       properties:
         title:
           type: string
@@ -1308,6 +1308,7 @@ components:
         - scheduledAt
         - durationMinutes
         - status
+        - location
       properties:
         sessionId:
           type: string
